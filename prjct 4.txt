@@ -1,0 +1,981 @@
+# Function to clear the console
+function Clear-Screen {
+    Clear-Host
+    "`n"
+}
+
+# Function to display a header
+function Show-Header {
+    param(
+        [string] $Header
+    )
+    Write-Host $Header.ToUpper()
+    Write-Host "".PadLeft($Header.Length, '=')
+}
+
+# Function to pause and wait for Enter key
+function Press-Enter {
+    Read-Host "`nPress 'Enter' to continue"
+}
+
+# Function to list files in a folder
+function List-Files {
+    param(
+        [string] $folder
+    )
+
+    Clear-Screen
+    Show-Header "List of Files"
+    Write-Host "Folder: $folder"
+
+    $files = Get-ChildItem -Path $folder | Where-Object { -not $_.PSIsContainer }
+
+    foreach ($file in $files) {
+        Write-Host "$($file.Name.PadRight(30)) $($file.Length / 1KB -f 2) KB"
+    }
+
+    Press-Enter
+}
+
+# Function to delete files in a folder
+function Delete-Files {
+    param(
+        [string] $folder
+    )
+
+    Clear-Screen
+    Show-Header "Delete Files"
+    Write-Host "Folder: $folder"
+
+    $Confirm = Read-Host "Are you sure you want to delete all files in the above folder (Y/N)?"
+
+    if ($Confirm -eq "Y") {
+        $files = Get-ChildItem -Path $folder | Where-Object { -not $_.PSIsContainer }
+        foreach ($file in $files) {
+            Remove-Item -Path $file.FullName -ErrorAction SilentlyContinue
+        }
+        Write-Host "All files deleted from $folder"
+    } else {
+        Write-Host "Deletion canceled."
+    }
+
+    Press-Enter
+}
+
+# Function to view the content of the Recycle Bin
+function View-RecycleBin {
+    Clear-Screen
+    Show-Header "Recycle Bin Content"
+
+    $Bin = (New-Object -ComObject Shell.Application).NameSpace(10).Items()
+    
+    foreach ($item in $Bin) {
+        Write-Host "$($item.Name) - $(($item.ModifyDate).ToString())"
+    }
+
+    Press-Enter
+}
+
+# Function to empty the Recycle Bin
+function Empty-RecycleBin {
+    Clear-RecycleBin -Confirm:$false
+    Write-Host "Recycle Bin emptied."
+    Press-Enter
+}
+
+# Main function
+function Main {
+    do {
+        Clear-Screen
+        Show-Header "File Management Menu"
+
+        Write-Host "1. List My Documents"
+        Write-Host "2. Delete My Documents"
+        Write-Host "3. List Downloads"
+        Write-Host "4. Delete Downloads"
+        Write-Host "5. List Temporary Internet Files"
+        Write-Host "6. Delete Temporary Internet Files"
+        Write-Host "7. List Temporary User Files"
+        Write-Host "8. Delete Temporary User Files"
+        Write-Host "9. View Recycle Bin Content"
+        Write-Host "10. Empty Recycle Bin"
+        Write-Host "X. Exit"
+
+        $option = Read-Host "Enter an option"
+
+        switch ($option) {
+            "1" { List-Files ([System.Environment]::GetFolderPath("MyDocuments")) }
+            "2" { Delete-Files ([System.Environment]::GetFolderPath("MyDocuments")) }
+            "3" { List-Files $env:USERPROFILE\Downloads }
+            "4" { Delete-Files $env:USERPROFILE\Downloads }
+            "5" { List-Files $env:LocalAppDataLow }
+            "6" { Delete-Files $env:LocalAppDataLow }
+            "7" { List-Files $env:Temp }
+            "8" { Delete-Files $env:Temp }
+            "9" { View-RecycleBin }
+            "10" { Empty-RecycleBin }
+            "X" { break }
+        }
+    } while ($option -ne "X")
+}
+
+# Start here
+Main
+
+#region Utils
+function ClearScreen
+{
+    #Clear console
+    Clear-Host
+    "`n"   
+} #CLS
+
+function Header
+{
+    param($Header)
+    Write-Host $Header.ToUpper()
+    Write-Host "".PadLeft($Header.Length, '=')
+} #Header
+
+function PressEnter
+{
+    Read-Host "`nPress 'Enter' to return to menu"
+} #PressEnter
+
+#endregion
+
+function EnvVariables
+{
+    ClearScreen
+    Header "Environmental variables"
+
+    Get-Childitem -Path Env:* | Sort-Object Name
+
+    PressEnter
+} #EnvVariables
+
+function ListFiles
+{
+    param($folder)
+     
+    $i = 0
+    $nFiles = (Get-ChildItem -Path $folder | 
+               Where-Object {$_.Mode -notmatch "d"} | 
+            Measure-Object).Count
+
+    do
+    {
+        ClearScreen
+        Header "List of files"
+        Write-Host "Folder: " $folder
+        Write-Host ("Progress: " + $i.ToString() + "/" + $nFiles)
+
+        Get-ChildItem -Path $folder |
+            Where-Object {$_.Mode -notmatch "d"} |
+            select-object @{N="Name";    E = { $(if ($_.Name.Length -le 20) {$_.Name} else {$_.Name.Substring(0,20)})}}, #Mode, FullName,
+                          @{N = "    KB"; E = { $(if ($_.Mode -match "d")    { "" }   else { ($_.Length / 1Kb).ToString("n1").PadLeft(6) }) } } -Skip $i -First 20 |         
+            Format-Table
+        if ($i + 20 -lt $nFiles)
+        {
+            $key = Read-Host "Press 'Enter' for next 20 or 'M' to return to menu"
+        }
+        $i += 20
+    } while ($i -le $nFiles -and $key -ne "M")
+
+    if ($key -ne "M") 
+    {
+        PressEnter
+    }
+
+} #ListFiles
+
+function DeleteFiles
+{
+    param($folder)
+
+    ClearScreen
+    Header "Delete of files"
+    Write-Host "Folder: " $folder
+
+    $Confirm = Read-Host -Prompt "Are you sure you want to delete all files in the above folder (Y/N)?"
+
+    if ($Confirm -eq "Y")
+    {
+        $files = Get-ChildItem -Path $folder | Where-Object {$_.Mode -notmatch "d"}
+        foreach ($file in $files )
+        {            
+            Remove-Item -Path $file.Fullname -ErrorAction SilentlyContinue -ErrorVariable errors
+            if ($errors -ne $null) { Write-Host $errors }
+            else {Write-Host ($file.Name + " removed") }
+        } # for each file
+    } #if Confirm
+
+    PressEnter
+} #DeleteFiles
+
+function RecycleBin
+{
+    ClearScreen
+    Header "Recycle bin"
+
+    #https://stackoverflow.com/questions/716521/listing-files-in-recycle-bin
+    $Bin = (New-Object -ComObject Shell.Application).NameSpace(10).Items()
+    # $Bin | Get-Member #Werk in PS, maar nie in ISE (Huh-uh - werk ook na exit, ook met Write-Host)
+    $Bin | Select-Object Name, ModifyDate | Format-Table
+  
+    PressEnter
+} #RecycleBin
+
+function Restore
+{
+    #https://apps.microsoft.com/store/detail/windows-file-recovery/9N26S50LN705?hl=en-us&gl=us 
+	#https://support.microsoft.com/en-us/windows/recover-lost-files-on-windows-10-61f5b28a-f5b8-3cc2-0f8e-a63cb4e1d4c4 
+	#https://www.maketecheasier.com/restore-deleted-files-windows/ (Item 4)
+
+    Write-Host "To be added - see references"
+    
+    PressEnter
+} #Restore
+
+function EmptyBin
+{
+    #https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/clear-recyclebin?view=powershell-7.3
+    Clear-RecycleBin -Confirm
+} #EmptyBin
+
+
+#Menu
+function Menu 
+{
+    #Clear console
+    ClearScreen
+    "`n"   
+    Header "Menu"
+
+   # Write-Host "E. Environmental variables"
+    
+    Write-Host "My Documents"  
+    Write-Host "  ML. List"
+    #Write-Host "  MD. Delete"
+    
+    Write-Host "`nDownloads"
+    Write-Host "  DL. List"
+    Write-Host "  DD. Delete"
+
+    Write-Host "`nTemporary Internet files"   
+    Write-Host "  IL. List"
+    Write-Host "  ID. Delete"
+
+    Write-Host "`nTemporary User files"
+    Write-Host "  UL. List"
+    Write-Host "  UD. Delete"
+
+    Write-Host "`nRecycle bin"
+    Write-Host "  BL. View content"
+    Write-Host "  BR. Restore file"
+    Write-Host "  BE. Empty bin"
+
+    Write-Host "`nX. Exit"
+    Write-Host
+
+    $private:option = Read-Host -Prompt "Option"
+    return $option
+} #Menu
+
+#Main function
+function Main
+{
+    # https://stackoverflow.com/questions/57947150/where-is-the-downloads-folder-located
+    $Downloads = (New-Object -ComObject Shell.Application).NameSpace('shell:Downloads').Self.Path
+    $MyDocs = ([System.Environment]::GetFolderPath("MyDocuments"))
+    $ITemp = $Env:Temp
+    $UTemp = "$Env:windir\Temp"
+    $Bin = (New-Object -ComObject Shell.Application).NameSpace(10).Items()
+
+    #Loop through menu items
+    do
+    {
+        $option = Menu
+        
+        switch ($option)
+        {
+            "E" { EnvVariables }
+
+            "ML" { ListFiles $MyDocs }
+            "MD" { DeleteFiles $MyDocs }
+
+            "DL" { ListFiles $Downloads }
+            "DD" { DeleteFiles $Downloads }
+
+            "IL" { ListFiles $ITemp }
+            "ID" { DeleteFiles $ITemp }
+
+            "UL" { ListFiles $UTemp }             
+            "UD" { DeleteFiles $UTemp }             
+
+            "BL" { RecycleBin }
+            "BR" { Restore }
+            "BE" { EmptyBin }
+        }
+
+    } until ($option -eq "X")
+
+} #Main
+
+#Start here
+Main
+
+<# References
+    https://ss64.com/ps/syntax-arrays.html
+#>
+
+from c
+# Function to clear the console
+function Clear-Screen {
+    Clear-Host
+    "`n"
+}
+
+# Function to display a header
+function Show-Header {
+    param(
+        [string] $Header
+    )
+    Write-Host $Header.ToUpper()
+    Write-Host "".PadLeft($Header.Length, '=')
+}
+
+# Function to pause and wait for Enter key
+function Press-Enter {
+    Read-Host "`nPress 'Enter' to continue"
+}
+
+# Function to view the content of the Recycle Bin
+function View-RecycleBin-Content {
+    Clear-Screen
+    Show-Header "Recycle Bin Content"
+
+    $Bin = (New-Object -ComObject Shell.Application).NameSpace(10).Items()
+    $Bin | Select-Object Name, ModifyDate | Format-Table
+  
+    Press-Enter
+}
+
+# Function to empty the Recycle Bin
+function Empty-RecycleBin {
+    Clear-RecycleBin -Confirm:$false
+    Write-Host "Recycle Bin emptied."
+    Press-Enter
+}
+
+# Menu
+function Menu {
+    Clear-Screen
+    "`n"
+    Show-Header "Recycle Bin Management"
+
+    Write-Host "1. View Recycle Bin Content (VC)"
+    Write-Host "2. Empty Recycle Bin (EB)"
+    Write-Host "3. Exit (X)"
+
+    $option = Read-Host "Enter an option"
+
+    return $option
+}
+
+# Main function
+function Main {
+    do {
+        $option = Menu
+
+        switch ($option) {
+            "1" { View-RecycleBin-Content }
+            "2" { Empty-RecycleBin }
+            "3" { break }
+        }
+    } until ($option -eq "3")
+}
+
+# Start here
+Main
+
+#region Utils
+function ClearScreen
+{
+    #Clear console
+    Clear-Host
+    "`n"   
+} #CLS
+
+function Header
+{
+    param($Header)
+    Write-Host $Header.ToUpper()
+    Write-Host "".PadLeft($Header.Length, '=')
+} #Header
+
+function PressEnter
+{
+    Read-Host "`nPress 'Enter' to return to menu"
+} #PressEnter
+
+#endregion
+
+function ViewContent
+{
+    #https://stackoverflow.com/questions/716521/listing-files-in-recycle-bin
+    #https://jdhitsolutions.com/blog/powershell/7024/managing-the-recycle-bin-with-powershell/
+
+    $Bin = (New-Object -ComObject Shell.Application).NameSpace(10).Items()
+    # $Bin | Get-Member #Werk in PS, maar nie in ISE (Huh-uh - werk ook na exit, ook met Write-Host)
+    $Bin | Select-Object Name, ModifyDate | Format-Table
+  
+    PressEnter
+} #ViewContent
+
+function EmptyBin
+{
+    #https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/clear-recyclebin?view=powershell-7.3
+    Clear-RecycleBin -Confirm
+} #EmptyBin
+
+
+#Menu
+function Menu 
+{
+    #Clear console
+    ClearScreen
+    "`n"   
+    Header "Recycle bin"
+
+    Write-Host "VC. View content"
+    Write-Host "EB. Empty bin"
+
+    Write-Host "`nX. Exit"
+    Write-Host
+
+    $private:option = Read-Host -Prompt "Option"
+    return $option
+} #Menu
+
+#Main function
+function Main
+{
+    #Loop through menu items
+    do
+    {
+        $option = Menu
+        
+        switch ($option)
+        {
+            "VC" { ViewContent }
+            "EB" { EmptyBin }
+        }
+
+    } until ($option -eq "X")
+
+} #Main
+
+#Start here
+Main
+
+<# References
+    https://ss64.com/ps/syntax-arrays.html
+#>
+
+function msSleep
+{
+  param ($ms)
+
+  start-sleep -m $ms
+}
+function ClearScreen
+{
+  Clear-Host
+}
+
+function Header
+{
+   param ($header)
+   Write-Host $header 
+}
+
+function Normalize
+{
+    param($pid_)
+
+    $sig = '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);'
+    Add-Type -MemberDefinition $sig -name NativeMethods -namespace Win32
+    $hwnd = @(Get-Process -id $pid_)[0].MainWindowHandle
+    [Win32.NativeMethods]::ShowWindowAsync($hwnd, 1)
+} #Normalize 
+
+
+function StartNotepad
+{
+   #Start Notepad
+   $shell = New-Object -ComObject Wscript.Shell;
+   $shell.Run("Notepad")
+
+   #Set focus to Notepad
+   $shell.AppActivate("Notepad")
+   msSleep 1000
+
+   #Send keys to Notpad
+   $shell.SendKeys("abcdef")
+   $shell.SendKeys("{Enter}")
+   $shell.SendKeys("ghijkl")
+
+   #Allow user time to read
+   msSleep 2000
+
+   #Close
+   $NotepadID = (get-process | Where-Object {$_ -like "*notepad*"}).Id
+   if ( !($NotepadID -eq $null))
+   {  
+     stop-process -Id $NotepadID
+   }
+}#Notepad
+
+function SendEmail
+{
+    #Read email field values
+    $To = "pieter@pl3.co.za"  #Read "To"
+    $Subject = ("Test " + (get-date -format "dd MMM HH:mm:ss")) #Read "Subject"
+    $Message = "Message test" #Read "Message"
+
+    #Create shell
+    $shell = New-Object -ComObject Wscript.Shell;
+    $OutlookId = (get-process | Where-Object {$_ -like "*Outlook*"}).Id
+    if ($OutlookId -eq $null)
+    {
+        $shell.Run("Outlook")
+        Write-Host "New Window opened"
+        msSleep 2000
+    }
+    $OutlookId = (get-process | Where-Object {$_ -like "*Outlook*"}).Id
+
+    #Set focus    
+    Normalize $OutlookId
+    msSleep 200
+    while (-not $shell.AppActivate("$OutlookId")) 
+    {
+        msSleep 200
+    }
+
+   #Start new message
+   [System.Windows.Forms.SendKeys]::SendWait("^{n}") #Ctrl-N
+   msSleep 500
+
+   #Fill in fields
+   $shell.SendKeys($To)           #To
+   msSleep 500
+   $shell.SendKeys("{TAB}")       #CC
+   msSleep 500
+   #$shell.SendKeys("{TAB}")       #BCC
+   #msSleep 500
+   $shell.SendKeys("{TAB}")       #BCC I don't know why it is necessary to do this twice
+   msSleep 500
+   $shell.SendKeys("{TAB}")       #Go to Subject
+   msSleep 500
+   $shell.SendKeys($Subject)      #Subject
+   msSleep 500
+   $shell.SendKeys("{TAB}")       #Go to message
+   msSleep 500
+   $shell.SendKeys($Message)      #Message
+   msSleep 500
+
+   #Send
+   [System.Windows.Forms.SendKeys]::SendWait("%{s}")
+   
+
+} #SendEmail
+
+
+#Main function
+function Main
+{
+    ClearScreen
+    #Header "Email"
+
+    #StartEmail
+    SendEmail
+
+} #Main
+
+#Start here
+Main
+
+<# References
+    https://stackoverflow.com/questions/19824799/how-to-send-ctrl-or-alt-any-other-key
+#>
+
+function Header
+{
+    param($Header)
+    Write-Host $Header.ToUpper()
+    Write-Host "".PadLeft($Header.Length, '=')
+} #Header
+
+function ClearScreen
+{
+   cls
+}
+
+function PressEnter
+{
+  Read-Host -Prompt "Press any key to continue ..."
+}
+
+function Read ([string] $prompt)
+{
+    return read-host -prompt $prompt
+}
+
+function ListAllUsers   #1
+{
+    ClearScreen         #1
+    Header "All users"  #1
+
+    Get-LocalUser `
+        | select-object Name, `
+          @{N="Description"; E = { $(if ($_.Description.Length -le 30) {$_.Description} else {$_.Description.Substring(0,30)})}},
+          LastLogon, AccountExpires, PasswordExpires `
+        | Sort Name `
+        | Format-Table
+
+   
+} #ListAllUsers
+
+function ListAllAdmins
+{
+    ClearScreen
+    Header "All Administrators"
+
+    Get-LocalGroupMember -Group Administrators
+} #ListAllAdmin
+
+function ListAllStandards
+{
+    ClearScreen
+    Header "All Standard users "
+
+    Get-LocalGroupMember -Group Users
+} #ListAllStandardUsers
+
+
+function ListPasswordExpired
+{
+    ClearScreen
+    Header "Users account or password expired"
+
+    $today = get-date
+
+    Get-LocalUser | 
+        Where-Object { ($_.AccountExpires -ne $null -and $_.AccountExpires -lt $today) -or
+                       ($_.PasswordExpires -ne $null -and $_.Passwordexpires -lt $today)
+                     } | 
+        select-object Name, AccountExpires, PasswordExpires | 
+        Format-Table
+
+} #ListPasswordExpired
+
+function AddUser
+{
+    ClearScreen
+    Header "Add user"
+
+    $username = Read "User name"
+    $password = read-host -prompt "Password" -AsSecureString
+
+    $exists = (get-localuser).name -contains $username
+    if (!$exists)
+    {
+        $today = get-date
+        $accountExpires = $today.AddDays(-1)
+
+        #Add user
+        new-localuser -name $username -password $password `
+		              -AccountExpires $accountExpires `
+                      -Description "TPG527C user"
+        write-host "User " $username " created."
+
+        #Add user to group
+        Add-LocalGroupMember -Group Users -Member $username
+        #Add-LocalGroupMember -Group Administrators -Member $username
+        write-host "User " $username " added to group " Users + "."
+
+    }#Not exists
+
+}#Add user
+
+function RemoveUser
+{
+    ClearScreen
+    Header "Remove user"
+
+    $username = Read "Username"
+    $exists = (get-localuser).name -contains $username
+    if ($exists)
+    {
+        Remove-LocalUser -name $username -confirm -ErrorAction SilentlyContinue -ErrorVariable error
+        if (!$error)
+        {
+           Write-Host ("User " + $username + " removed.")
+           Write-Host $error
+        }
+        else
+        {
+           Write-Host ("User " + $username + " could not be removed.")
+           Write-Host $error
+        }
+    }
+    else
+    {
+        Write-Host ("User " + $username + " does not exist.")
+    }
+
+} #RemoveUser
+
+#Menu
+function Menu 
+{
+    #Clear console
+    ClearScreen
+    "`n"   
+    Header "User management"
+
+    #Menu    
+    Write-Host "L. List all users"  
+    Write-Host "A. List all administrators"
+    Write-Host "S. List all standard users"
+    Write-Host "E. Account or Password expired"
+    Write-Host "+. Add user"
+    Write-Host "-. Remove user"  
+
+    Write-Host "`nX. Exit"
+    Write-Host
+
+    $private:option = Read-Host -Prompt "Option"
+    return $option
+} #Menu
+
+#Main function
+function Main
+{
+    #Loop through menu items
+    do
+    {
+        $option = Menu
+        
+        switch ($option)
+        {
+            "L" { ListAllUsers }
+            "A" { ListAllAdmins }
+            "S" { ListAllStandards }
+            "E" { ListPasswordExpired }
+            "+" { AddUser }
+            "-" { RemoveUser }
+        }
+        PressEnter
+
+    } until ($option -eq "X")
+
+} #Main
+
+#Start here
+Main
+
+<# References
+    https://ss64.com/ps/syntax-arrays.html
+#>
+
+function ClearScreen
+{
+  Clear-Host
+}
+
+function Header
+{
+    param($Header)
+    Write-Host $Header.ToUpper()
+    Write-Host "".PadLeft($Header.Length, '=')
+} #Header
+
+function PressEnter
+{
+    Read-Host "`nPress 'Enter' to return to menu"
+} #PressEnter
+
+function BIOS1
+{
+    ClearScreen
+    Header "BIOS information 1"
+  
+    Get-ComputerInfo "Bios*"
+
+    PressEnter
+} #Bios
+
+function BIOS2
+{
+    ClearScreen
+    Header "BIOS information 2"
+  
+    Get-CimInstance win32_bios
+
+    PressEnter
+} #Bios
+
+function ComputerSystem
+{
+    ClearScreen
+    Header "Hardware information"
+
+    Get-ComputerInfo "CS*"
+
+    PressEnter
+} #ComputerSystem
+
+function CPU
+{
+    ClearScreen
+    Header "CPU Details"
+
+    #https://ss64.com/ps/get-ciminstance.html
+    get-ciminstance win32_processor | format-list
+
+    PressEnter
+} #CPU
+
+function DiskDrives
+{
+    ClearScreen
+    Header "Disk Drives"
+
+    get-ciminstance win32_logicaldisk | 
+       Select-Object Name, 
+                     FileSystem,
+                     @{N="Size (GB)"; E = { [Math]::Round($_.Size / 1GB)}},
+                     @{N="Free (GB)"; E = { [Math]::Round($_.FreeSpace / 1GB)}} |
+       Format-Table
+
+    PressEnter
+} #DiskDrives
+
+function Memory
+{
+    ClearScreen
+    Header "Installed MEMORY "
+
+    #https://ss64.com/ps/get-ciminstance.html
+    get-ciminstance win32_physicalmemory | 
+          select-object Tag, BankLabel,  @{N="MB"; E = { $_.Capacity / 1MB}} |
+          format-table
+
+    PressEnter
+} #Memory
+
+function Motherboard
+{
+    ClearScreen
+    Header "Motherboard "
+
+    #https://ss64.com/ps/get-ciminstance.html
+    get-ciminstance win32_baseboard | select Manufacturer, Product | Format-List
+
+    PressEnter
+} #Memory
+
+
+function OperatingSystem
+{
+    ClearScreen
+    Header "Operating system"
+
+    Get-ComputerInfo "OS*"
+
+    PressEnter
+} #OperatingSystem
+
+function Printers
+{
+    ClearScreen
+    Header "Installed printers"
+
+    #https://ss64.com/ps/get-ciminstance.html
+    get-ciminstance win32_printer | select-object Name, Drivername
+
+    PressEnter
+} #Printers
+
+function Windows
+{
+    ClearScreen
+    Header "Windows"
+
+    Get-ComputerInfo "Windows*"
+
+    PressEnter
+} #OperatingSystem
+
+
+#Menu
+function Menu 
+{
+    #Clear console
+    ClearScreen
+    "`n"   
+    Header "System information"
+
+    #Menu    
+    Write-Host "B1.  BIOS details (Get-ComputerInfo)"  
+    Write-Host "B2.  BIOS details (Get-CIMinstance)"  
+    Write-Host "CS.  Computer system"  
+    Write-Host "CPU. CPU"  
+    Write-Host "DD.  Disk drives"  
+    Write-Host "MEM. Memory chips"  
+    Write-Host "MB.  Motherboard"  
+    Write-Host "OS.  Operating system"  
+    Write-Host "P.   Installed printers"  
+    Write-Host "W.   Windows"  
+
+    Write-Host "`nX. Exit"
+    Write-Host
+
+    $private:option = Read-Host -Prompt "Option"
+    return $option
+} #Menu
+
+#Main function
+function Main
+{
+    #Loop through menu items
+    do
+    {
+        $option = Menu
+        
+        switch ($option)
+        {
+            "B1"  { Bios1 }
+            "B2"  { Bios2 }
+            "CS"  { ComputerSystem }
+            "CPU" { CPU }
+            "DD"  { DiskDrives }
+            "MEM" { Memory }
+            "MB"  { Motherboard }
+            "OS"  { OperatingSystem }
+            "P"   { Printers }
+            "W"   { Windows }
+        }
+
+    } until ($option -eq "X")
+
+} #Main
+
+#Start here
+Main
+
+<# References
+    https://ss64.com/ps/syntax-arrays.html
+#>

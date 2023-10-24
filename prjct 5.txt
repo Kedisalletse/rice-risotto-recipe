@@ -1,0 +1,515 @@
+function ListProcesses
+{
+    param([object] $s)
+
+    if ($s)
+    {
+        ClearScreen
+        Header "Running processes"    
+        Invoke-Command -Session $s -ScriptBlock `
+        { 
+            Get-Process `
+                | Where-Object -Property "Name" -ne "svchost" `
+                | Where-Object -Property "Name" -ne "wsmprovhost" `
+                | Where-Object -Property "Name" -ne "RuntimeBroker" `
+                | Sort-Object -Property "Name"
+          }
+    }
+} #ListProcesses
+
+function ListServices
+{
+    param([object] $s)
+
+    if ($s)
+    {
+        ClearScreen
+        Header "Running services"    
+        Invoke-Command -Session $s -ScriptBlock { Get-Service }
+    }
+} #ListServices
+
+function CalculatorClose
+{
+   $CalcID = (get-process | Where-Object {$_ -like "*Calc*"}).Id
+   if ( !($CalcID -eq $null))
+   {  
+     stop-process -Id $CalcID
+   }
+} #CalculatorClose
+
+function ExplorerClose
+{
+   $ID = (get-process | Where-Object {$_ -like "*Explorer*"}).Id
+   if ( !($ID -eq $null))
+   {  
+     stop-process -Id $ID
+   }
+} #ExplorerClose
+
+function EdgeOpen
+{    
+    $actionEdge = New-Scheduledtaskaction -Execute "MSEdge"
+    $taskEdge = New-Scheduledtask -Action $actionEdge
+    $registeredTaskEdge = Register-Scheduledtask -Inputobject $taskEdge
+    Start-Scheduledtask -InputObject $registeredTaskEdge
+} #EdgeOpen
+
+function EdgeClose
+{
+   $ID = (get-process | Where-Object {$_ -like "*Edge*"}).Id
+   if ( !($ID -eq $null))
+   {  
+     stop-process -Id $ID
+   }
+} #EdgeClose
+
+function SendMessage
+{    
+    ClearScreen
+    Header "Message"
+
+    $pw = convertto-securestring -asplaintext -force -string "blignautB"
+    $cred = new-object -typename System.management.Automation.PSCredential -argumentlist "Blignaut", $pw
+    $rc = "BLIGNAUTB"
+    
+    $message = read-host -prompt 'Message'
+    Invoke-WmiMethod -Class win32_process `
+                     -ComputerName $rc `
+                     -Credential $cred `
+                     -Name create `
+                     -ArgumentList "c:\windows\system32\msg.exe * /time:5 $message" `
+                     | Out-Null
+} #SendMessage
+
+function NotepadOpen
+{    
+    $action = New-Scheduledtaskaction -Execute "Notepad"
+    $task = New-Scheduledtask -Action $action
+    $registeredTask = Register-Scheduledtask -Inputobject $task
+    Start-Scheduledtask -InputObject $registeredTask
+} #NotepadOpen
+
+
+function NotepadClose
+{
+   $NotepadID = (get-process | Where-Object {$_ -like "*notepad*"}).Id
+   if ( !($NotepadID -eq $null))
+   {  
+     stop-process -Id $NotepadID
+   }
+} #NotepadClose
+
+function ScriptRun
+{
+    param([object] $s)
+    
+    #Invoke-Command -Session $s -scriptblock { Start-Process Calc }
+    #Invoke-Command -Session $s -ScriptBlock { & "C:\StartCalc.ps1" }
+    Invoke-Command -Session $s -ScriptBlock { & "C:\Listen.ps1" }
+
+    #$actionPS = New-Scheduledtaskaction -Execute "C:\Listen.ps1"
+    #$taskPS = New-Scheduledtask -Action $actionPS
+    #$registeredTaskPS = Register-Scheduledtask -Inputobject $taskPS
+    #Start-Scheduledtask -InputObject $registeredTaskPS
+    
+
+    #Read-Host
+
+} #ScriptRun
+
+
+function StopProcess
+{
+    ClearScreen
+    Header "Stop process"    
+
+    Invoke-Command -Session $s -ScriptBlock `
+    {
+        $id = Read-Host "Process id"
+        $name = (get-process -Id $id -ErrorAction SilentlyContinue).Name
+        if ($name)
+        {  
+            $confirm = Read-Host ("Are you sure you want to stop " + $name + " (Yes/No)? ")
+            if ($confirm -eq "Yes")
+            {
+                stop-process -Id $id
+            }
+        }
+        else
+        {
+            Write-Host "Process id does not exist"
+        }
+    }
+
+} #StopProcess
+
+#Menu
+function Menu 
+{
+    #Clear console
+    ClearScreen
+    "`n"   
+    Header "Remote management"
+
+    #Menu    
+    Write-Host "LP. List processes"  
+    #Write-Host "LS. List services"  
+
+    Write-Host "CO. Calculator open"  
+    Write-Host "CX. Calculator close"  
+
+    Write-Host "EO. Edge open"  
+    Write-Host "EX. Edge close"  
+
+    Write-Host "XO. Explorer open"  
+    Write-Host "XX. Explorer close"  
+
+    Write-Host "NO. Notepad open"  
+    Write-Host "NX. Notepad close"  
+
+    Write-Host "SM. Send message"  
+    Write-Host "SR. Script run"  
+
+    Write-Host "S. Stop process"  
+    
+    Write-Host "`nX. Exit"
+    Write-Host
+
+    $private:option = Read-Host -Prompt "Option"
+    return $option
+} #Menu
+
+#Main function
+function Main
+{
+    #Create connection
+    $pw = convertto-securestring -asplaintext -force -string "blignautB"
+    $cred = new-object -typename System.management.Automation.PSCredential -argumentlist "Blignaut", $pw
+    $s = new-pssession -computername BlignautB -credential $cred
+
+    #Invoke-Command -computername BlignautB -credential blignaut -scriptblock ${function:NotepadOpen}
+    #Invoke-Command -Session $s -scriptblock ${function:NotepadOpen}
+
+    #Loop through menu items
+    do
+    {
+        $option = Menu
+        
+        switch ($option)
+        {
+            "LP" { (ListProcesses $s) }
+            "LS" { (ListServices $s) }
+
+            "CO" { Invoke-Command -Session $s -scriptblock { Start-Process Calc } }
+            "CX" { Invoke-Command -Session $s -scriptblock ${function:CalculatorClose} }
+
+            "EO" { Invoke-Command -Session $s -scriptblock ${function:EdgeOpen} }
+            "EX" { Invoke-Command -Session $s -scriptblock ${function:EdgeClose} }
+            
+            "XO" { Invoke-Command -Session $s -scriptblock { Start-Process Explorer } }
+            "XX" { Invoke-Command -Session $s -scriptblock ${function:ExplorerClose} }
+
+            "NO" { Invoke-Command -Session $s -scriptblock ${function:NotepadOpen} }
+            "NX" { Invoke-Command -Session $s -scriptblock ${function:NotepadClose} }
+
+            "SR" { ScriptRun $s }
+            "SM" { SendMessage }
+            #"SR" { Invoke-Command -Session $s -scriptblock ${function:ScriptRun} }
+
+            "S" { StopProcess }
+        }
+        
+        #Do it here - if it is in the function, it does not always work - I really do not know why.
+        PressEnter
+    } until ($option -eq "X")
+
+} #Main
+
+#Start here
+Main
+
+#Option A
+function LocalIP
+{
+    ClearScreen
+    Header "Local IP"
+
+    #Get IP (Several alternatives)
+    #$ip = (get-ciminstance win32_networkadapterconfiguration).IPAddress #Lists only one
+    
+    #$ip = Get-CimInstance -Class Win32_NetworkAdapterConfiguration `
+    #                      -Filter IPEnabled=$true `
+    #                     | Select-Object -ExpandProperty IPAddress
+    
+    #$hostName = HostName
+    #$ip = Test-Connection -ComputerName $hostName | Select IPV4Address
+    #$ip = get-netipaddress -addressfamily IPv4 | select-object IPAddress, interfacealias
+
+    $ip = (get-netipconfiguration | where-object {$_.InterfaceDescription -like "*"}).IPV4Address.IPAddress
+
+    #Display IP
+    $ip 
+    
+} #LocalIP
+
+#Option B
+function Ping
+{
+    ClearScreen
+    Header "Ping"
+    $ip = Read "IP"
+    get-ciminstance win32_pingstatus -Filter ("Address='" + $ip + "'") `
+                   | select-object -Property Address, ResponseTime, StatusCode `
+                   | format-table
+
+} #Ping
+
+#Option C
+function HostFromIP
+{
+    ClearScreen
+    Header "Host from IP"
+    $ip = Read "IP"
+    [System.Net.Dns]::GetHostByAddress($ip).Hostname 
+
+} #HostFromIP
+
+#Option D
+function IPFromHost
+{
+    ClearScreen
+    Header "Host from IP"
+    $hostName = Read-Host "Host"
+    
+    #Two alternatives
+    [System.Net.Dns]::GetHostAddresses($hostName) | foreach { echo $_.IPAddressToString } | format-table
+    #(Resolve-DNSName $hostName) | foreach { echo $_.IP4Address }
+           
+
+} #IPFromHost
+
+function AllIPs
+{
+    195..204 | % `
+              {
+                $IP= "192.168.56.$_"
+                write-host "Testing" $IP "..."
+                if(Test-Connection $IP -count 1 -timeoutSeconds 1 ) #TimeoutSeconds only available from PS 6.0
+                {
+                    "Found $IP"
+                }
+            }
+} #AllIPs
+
+#Menu
+function Menu 
+{
+    #Clear console
+    ClearScreen
+    "`n"   
+    Header "Network analysis"
+
+    #Menu    
+    Write-Host "A. Local IP"  
+    Write-Host "B. Ping"  
+    Write-Host "C. Host name from IP"
+    Write-Host "D. IP from host name"
+    Write-Host "E. All IPs on subnet"  
+       
+    Write-Host "`nX. Exit"
+    Write-Host
+
+    $private:option = Read-Host -Prompt "Option"
+    return $option
+} #Menu
+
+#Main function
+function Main
+{
+    #Loop through menu items
+    do
+    {
+        $option = Menu
+        
+        switch ($option)
+        {
+            "A" { (LocalIP) }
+            "B" { (Ping) }
+            "C" { (HostFromIP) }
+            "D" { (IPFromHost) }
+            "E" { (AllIPs) }
+
+
+        }
+        
+        #Do it here - if it is in the function, it does not always work - I really do not know why.
+        PressEnter
+    } until ($option -eq "X")
+
+} #Main
+
+#Start here
+Main
+
+#Option A
+function LocalToRemoteShared
+{
+    #This is supposed to work, but does not - I cannot get the folder to be shared without password. Maybe because Windows is not activated.
+    Copy-Item "C:\SharedA\A.txt" -Destination "\\BLIGNAUTB\SharedB"
+
+    #Alternative (Use credentials)
+    $pw = convertto-securestring -asplaintext -force -string "blignautB"
+    $cred = new-object -typename System.management.Automation.PSCredential -argumentlist "Blignaut", $pw
+    new-psdrive -Name B -PSProvider filesystem -Root "\\BLIGNAUTB\SharedB" -Credential $cred
+    Copy-Item "C:\SharedA\A.txt" -Destination "B:\"
+
+} #LocalToRemoteShared
+
+#Option B
+function LocalToRemoteNotShared
+{
+    param([object] $s)
+
+    Copy-Item "C:\UnsharedA\A.txt" -Destination "C:\UnsharedB" -ToSession $s
+    
+    #https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/copy-item?view=powershell-7.3
+    #Example 5
+
+} #LocalToRemoteNotShared
+
+#Option C
+function RemoteSharedToLocal
+{
+    param([object] $s)
+
+    #Does not work
+    #Copy-Item "\\BLIGNAUTB\SharedB\B.txt" -Destination "C:\SharedA\B.txt"
+
+    #Alternative (Use credentials)
+    $pw = convertto-securestring -asplaintext -force -string "blignautB"
+    $cred = new-object -typename System.management.Automation.PSCredential -argumentlist "Blignaut", $pw
+    new-psdrive -Name B -PSProvider filesystem -Root "\\BLIGNAUTB\SharedB" -Credential $cred
+    Copy-Item "B:\B.txt" -Destination "C:\SharedA\B.txt"
+
+
+} #RemoteSharedToLocal
+
+#Option D
+function RemoteNotSharedToLocal
+{
+    param([object] $s)
+
+    Copy-Item "C:\UnsharedB\B.txt" -Destination "C:\UnsharedA" -FromSession $s
+
+
+} #RemoteNotSharedToLocal
+
+#Option E
+function FTPToLocal
+{
+    #Local file
+    $localFile = "C:\SharedA\Test.txt"
+
+    #Remote file
+    $client = New-Object -TypeName System.Net.WebClient;  
+    $client.Credentials = New-Object System.Net.NetworkCredential("tpg527c_52", "ThisIsAP@ssw0rd")
+    $client.DownloadFile("ftp://tpg527c.pl3.co.za/Test.txt", $localFile)
+    
+    #Read file
+    ClearScreen
+    Header "FTP Download"
+    $content = Get-Content $localFile
+    Write-host $content
+
+} #FTPToLocal
+
+
+#Option F
+function LocalToFTP
+{
+    ClearScreen
+    Header "Üpload file with personal details to FTP"
+
+    #Read personale details
+    $studentNumber = Read "Student number"
+    $surname = Read "Surname"
+
+    #Create file
+    $file = ("C:\SharedA\" + $surname + ".txt")
+    $fileExists = test-path $file
+    if (!$fileExists)
+    {
+        ni -Path "$file" -ItemType file | Out-Null
+    }
+    Clear-Content $file
+    $output = ($studentNumber + "`n" + $surname)
+    Add-Content $file $output
+
+    #Upload file
+    $client = New-Object -TypeName System.Net.WebClient;  
+    $client.Credentials = New-Object System.Net.NetworkCredential("tpg527c_52", "ThisIsAP@ssw0rd")
+    $client.UploadFile("ftp://tpg527c.pl3.co.za/" + $surname + ".txt", $file)
+
+} #LocalToFTP
+
+#Menu
+function Menu 
+{
+    #Clear console
+    ClearScreen
+    "`n"   
+    Header "File copies between computers"
+
+    #Menu    
+    Write-Host "A. Local to Remote shared folder"  
+    Write-Host "B. Local to Remote unshared folder"  
+
+    Write-Host "C. Remote shared folder to Local"  
+    Write-Host "D. Remote unshared folder to local"
+
+    Write-Host "E.  FTP server to Local"  
+    Write-Host "F.  Local to FTP server"
+        
+    Write-Host "`nX. Exit"
+    Write-Host
+
+    $private:option = Read-Host -Prompt "Option"
+    return $option
+} #Menu
+
+#Main function
+function Main
+{
+    #Create connection
+    $pw = convertto-securestring -asplaintext -force -string "blignautB"
+    $cred = new-object -typename System.management.Automation.PSCredential -argumentlist "Blignaut", $pw
+    $s = new-pssession -computername BlignautB -credential $cred
+
+    #Loop through menu items
+    do
+    {
+        $option = Menu
+        
+        switch ($option)
+        {
+            "A" { (LocalToRemoteShared $s) }
+            "B" { (LocalToRemoteNotShared $s) }
+
+            "C" { (RemoteSharedToLocal) }
+            "D" { (RemoteNotsharedToLocal $s) }
+
+            "E" { (FTPToLocal) }
+            "F" { (LocalToFTP) }
+
+            "S" { StopProcess }
+        }
+        
+        #Do it here - if it is in the function, it does not always work - I really do not know why.
+        PressEnter
+    } until ($option -eq "X")
+
+} #Main
+
+#Start here
+Main
