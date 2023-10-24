@@ -1,0 +1,763 @@
+BMI
+#Clear console
+cls
+"`n"
+
+#Function to calculate BMI
+function BMI
+{
+  param([double] $height, [double] $weight)
+  
+  $BMI = $weight / $height / $height
+  return [math]::Round($BMI,1)
+} #BMI
+
+#Function to determine status
+function Status
+{
+  param ([double] $BMI)
+
+  if ($BMI -lt 18.5) {return "Underweight" }
+  elseif ($BMI -le 24.9) {return "Normal" }
+  elseif ($BMI -le 29.9) {return "Overweight" }
+  else {return "Obese"}  
+} #Status
+
+#Enter height and weight
+[double] $height = Read-Host -Prompt "Height (m)  "
+[double] $weight = Read-Host -Prompt "Weight (kg) "
+
+#Get BMI
+$BMI = (BMI $height $weight)
+
+#Output
+Write-Host "BMI         :" $BMI
+Write-Host "Status      :" (Status $BMI)
+
+<# References
+  https://www.cdc.gov/healthyweight/assessing/bmi/adult_bmi/index.html
+  https://ss64.com/ps/if.html
+#>
+
+#Clear console
+cls
+"`n"
+
+GuessNumber
+#Function to allow the user to guess a number until s/he is correct
+function Guess
+{
+    param ([double] $number)
+    
+    #Guess counter
+    $n = 0;
+
+    #Keep on guessing until correct
+    do
+    {
+        #Increment guess counter
+        $n++;                                          
+
+        #Read guess from user
+        $guess = Read-Host -prompt "Guess " 
+       
+       #Evaluate guess
+       if ($guess -lt $number) {"Too low"}             
+       elseif ($guess -gt $number) {"Too high"}
+       else {"Correct! You took " + $n + " guesses."}
+
+    } while ($guess -ne $number)
+
+} #Guess
+
+#Get random number and initiate the guessing procedure
+$number = Get-Random -Minimum 1 -Maximum 100
+Guess $number
+
+
+<# References
+    https://ss64.com/ps/do.html
+#>
+# Function to display all items in an array in one line
+function Display-All {
+    param($array)
+
+    Write-Host "All numbers"  # Header
+    Write-Host "==========="
+
+    $array -join ', '  # Data
+    Write-Host "`n"
+}
+
+# Function to compute array statistics
+function Get-Array-Stats {
+    param($array)
+
+    Write-Host "Array stats"  # Header
+    Write-Host "==========="
+
+    $stats = $array | Measure-Object -Average -Sum -Maximum -Minimum |
+        Select-Object Count, Sum, @{Name="Avg"; Expression={"{0:n2}" -f $_.Average}}, Minimum, Maximum
+
+    $stats | Format-Table
+}
+
+# Function to display all elements that are divisible by 3
+function Display-Divisible-By-Three {
+    param($array)
+
+    Write-Host "Divisible by 3"  # Header
+    Write-Host "=============="
+
+    $divisibleByThree = $array | Where-Object { $_ % 3 -eq 0 }
+    $divisibleByThree -join ', '
+    Write-Host "`n"
+}
+
+# Function to display numbers divisible by 3 along with their square roots
+function Display-Square-Roots {
+    param($array)
+
+    Write-Host "Square roots"  # Header
+    Write-Host "============"
+
+    $divisibleByThree = $array | Where-Object { $_ % 3 -eq 0 }
+    $result = $divisibleByThree | ForEach-Object {
+        $number = $_
+        $squareRoot = [math]::Sqrt($number)
+        "$number, √$number ≈ {0:n3}" -f $squareRoot
+    }
+    $result
+    Write-Host "`n"
+}
+
+# Function to check if a number is prime
+function Is-Prime {
+    param([int] $number)
+
+    $isPrime = $true
+    if ($number -le 1) {
+        $isPrime = $false
+    } else {
+        for ($i = 2; $i -le [math]::Sqrt($number); $i++) {
+            if ($number % $i -eq 0) {
+                $isPrime = $false
+                break
+            }
+        }
+    }
+    return $isPrime
+}
+
+# Function to display all prime numbers in the given array
+function Display-Primes {
+    param($array)
+
+    Write-Host "Prime numbers"  # Header
+    Write-Host "============="
+
+    $primes = $array | Where-Object { (Is-Prime $_) }
+    $primes -join ', '
+    Write-Host "`n"
+}
+
+# Main function
+function Main {
+    # Assign array
+    $numbers = 3, 4, 7, 8, 11, 12, 13, 21, 25, 27, 39, 41, 43, 45, 59, 68, 71, 77, 83, 89, 91, 97
+
+    # Display all
+    Display-All $numbers
+
+    # Display array statistics
+    Get-Array-Stats $numbers
+
+    # Display numbers divisible by 3
+    Display-Divisible-By-Three $numbers
+
+    # Display square roots of numbers divisible by 3
+    Display-Square-Roots $numbers
+
+    # Display prime numbers
+    Display-Primes $numbers
+
+    # Empty line
+    Write-Host "`n"
+}
+
+# Start here
+Main
+
+
+#Display all items in array in one line
+function DisplayAll
+{
+    param($array)
+    "All numbers"      #Header
+    "==========="    
+    $array -join ', '  #Data
+    "`n"
+} #DisplayAll
+
+#Measure-Object
+function ArrayStats
+{
+    param($array)
+ 
+    "Array stats"      #Header
+    "==========="    
+
+    $array | 
+        Measure-Object -Average -Sum -Maximum -Minimum |
+        Select-Object Count, Sum, @{N="Avg"; E={$_.Average.ToString("n2")}}, Minimum, Maximum | 
+        Format-Table
+} #ArrayStats
+
+#Display all elements that are divisible by 3
+function DivisibleByThree
+{
+    param($array)
+
+    "Divisible by 3"      #Header
+    "=============="    
+
+    $arr2 = $array | ForEach-Object{if($_ % 3 -eq 0) { $_}} 
+    $arr2 -join ', '
+    "`n"
+} #DivisibleByThree
+
+#Numbers divisible by 3 with their square roots
+function SquareRoots
+{
+    param($array)
+
+    "Square roots"      #Header
+    "============"    
+
+    $arr2 = $array | ForEach-Object{if($_ % 3 -eq 0) { $_}} 
+    $arr3 = $arr2 | ForEach-Object{ $_.ToString().PadLeft(3) + [math]::Sqrt($_).ToString("n3").PadLeft(9) }
+    $arr3
+    "`n"
+} #SquareRoots
+
+#Predicate to determine if a number is prime
+function IsPrime
+{
+    param([int] $number)
+
+    $private:isPrime = $true
+    for ($i = 2; $i -le [math]::Sqrt($number); $i++)
+    {
+        if ($number % $i -eq 0)
+        {
+            $isPrime = $false
+        }
+    }
+    return $isPrime
+
+} #IsPrime
+
+#Display all prime numbers in the given array
+function Primes
+{
+    param($array)
+
+    "Prime numbers"      #Header
+    "============="    
+
+    $arr2 = $array | ForEach-Object{if( (IsPrime $_) -eq $True ) { $_ } } 
+    $arr2 -join ', '
+    "`n"
+} #Primes
+
+
+#Main function
+function Main
+{
+    #Clear console
+    cls
+    "`n"
+
+    #Assign array
+    $numbers = 3, 4, 7, 8, 11, 12, 13, 21, 25, 27, 39, 41, 43, 45, 59, 68, 71, 77, 83, 89, 91, 97
+
+    #Display all
+    DisplayAll $numbers
+
+    #Display stats
+    ArrayStats $numbers
+
+    #Display divisible by 3
+    DivisibleByThree $numbers
+
+    #Display divisible by 3
+    SquareRoots $numbers
+
+    #Prime numbers
+    Primes $numbers
+
+    #Empty line
+    "`n"
+} #Main
+
+#Start here
+Main
+
+<# References
+    https://ss64.com/ps/syntax-math.html 
+    https://ss64.com/ps/measure-object.html
+    https://ss64.com/ps/select-object.html
+    https://ss64.com/ps/measure-object.html
+#>
+
+# Function to split a sentence into words
+function Split-SentenceIntoWords {
+    param([string] $sentence)
+    return $sentence -split '\W+' | Where-Object { $_ -ne '' }
+}
+
+# Function to reverse the letters in a word
+function Reverse-LettersInWord {
+    param([string] $word)
+    $reversed = -join ($word.ToCharArray() | ForEach-Object { $_ })
+    return $reversed
+}
+
+# Function to reverse the letters in all words in an array
+function Reverse-LettersInWords {
+    param([string[]] $words)
+    $reversedWords = $words | ForEach-Object { Reverse-LettersInWord $_ }
+    return $reversedWords
+}
+
+# Main function
+function Main {
+    # Clear console
+    cls
+    "`n"
+
+    # Hard-coded test sentence
+    $sentence = "John is very, very sick."
+
+    # Display original sentence
+    "Sentence with original words"
+    $sentence
+
+    # Split the sentence into words
+    $words = Split-SentenceIntoWords $sentence
+
+    # Reverse the letters in each word
+    $reversedWords = Reverse-LettersInWords $words
+
+    # Replace the sentence
+    $sentence = $reversedWords -join ' '
+
+    # Sentence with reversed letters in every word
+    "`nWords with reversed letters"
+    $sentence
+
+    # Empty line
+    "`n"
+}
+
+# Start here
+Main
+
+# Clear console
+Clear-Host
+function ToWords
+{
+    param([string] $sentence)
+    return $sentence.Replace('.', '').Replace(',','').Split(' ')
+    #return $sentence.Split(' ')
+} #ToWords
+
+function ReverseLettersInWord
+{
+    param([string] $word)
+    $private:reversed = ''
+    foreach ($ch in [char[]]$word)
+    {
+        $reversed = $ch + $reversed
+    }
+    return $reversed
+} #ReverseLettersInWord
+
+function ReverseLettersInWords
+{
+    param([string[]] $words)
+
+    for ([int] $i = 0; $i -lt $words.Count; $i++)
+    {
+        $words[$i] = ReverseLettersInWord $words[$i]
+    }   
+    return $words
+} #ReverseLettersInWords
+
+
+#Main function
+function Main
+{
+    #Clear console
+    cls
+    "`n"
+
+    #Hard-coded test sentence
+    $sentence = "John is very, very sick."
+
+    #Display original sentence
+    "Sentence with original words"
+    $sentence
+
+    #Get array of words from sentence
+    $words = ToWords $sentence
+
+    #Reverse the letters in each word
+    $words = ReverseLettersInWords $words
+
+    #Replace the sentence
+    $sentence = $words -join ' '
+
+    #Sentence with reversed letters in every word
+    "`nWords with reversed letters"
+    $sentence
+
+    #Empty line
+    "`n"
+} #Main
+
+#Start here
+Main
+
+<# References
+    https://www.reddit.com/r/PowerShell/comments/5rnqx4/help_iterating_over_a_string/
+    https://powershellmagazine.com/2012/11/05/convert-a-string-to-a-character-array-2/
+    https://ss64.com/ps/syntax-arrays.html
+
+#>
+
+# Clear console
+Clear-Host
+
+# Clear console
+Clear-Host
+
+# Function to allow the user to guess a number until they are correct
+function Guess-Number {
+    param (
+        [double] $number
+    )
+
+    # Guess counter
+    $n = 0
+
+    # Keep on guessing until correct
+    do {
+        # Increment guess counter
+        $n++
+
+        # Read guess from the user
+        $guess = Read-Host -Prompt "Guess a number between 1 and 100: "
+
+        # Validate if the input is a valid number
+        if (-not ($guess -match '^\d+$')) {
+            Write-Host "Please enter a valid number."
+            continue
+        }
+
+        # Convert the input to an integer
+        $guess = [int]$guess
+
+        # Evaluate guess
+        if ($guess -lt $number) {
+            Write-Host "Too low"
+        } elseif ($guess -gt $number) {
+            Write-Host "Too high"
+        } else {
+            Write-Host "Correct! You took $n guesses."
+        }
+
+    } while ($guess -ne $number)
+}
+
+# Get a random number and initiate the guessing procedure
+$number = Get-Random -Minimum 1 -Maximum 100
+Guess-Number $number
+# Function to encrypt a string using a shift
+function Encrypt-String {
+    param(
+        [string] $original,
+        [int] $shift
+    )
+
+    $encrypted = ""
+    foreach ($ch in $original.ToCharArray()) {
+        $encrypted += [char]([int]$ch + $shift)
+    }
+    return $encrypted
+}
+
+# Function to decrypt a string using a shift
+function Decrypt-String {
+    param(
+        [string] $encrypted,
+        [int] $shift
+    )
+
+    $original = ""
+    foreach ($ch in $encrypted.ToCharArray()) {
+        $original += [char]([int]$ch - $shift)
+    }
+    return $original
+}
+
+# Main function
+function Main {
+    # Clear console
+    cls
+    "`n"
+
+    # Define and display the original string
+    $original = "p@55w0rd"
+    "Original string  : " + $original
+
+    # Encrypt and display
+    $encrypted = Encrypt-String $original 3
+    "Encrypted string : " + $encrypted
+
+    # Decrypt and display
+    $decrypted = Decrypt-String $encrypted 3
+    "Decrypted string : " + $decrypted
+    
+    # Empty line
+    "`n"
+}
+
+# Start here
+Main
+
+function Average
+{
+    param($marks)
+    [int] $private:sum = 0
+    $private:n = 0
+    foreach ($mark in $marks)
+    {
+        if ($mark -is [int]) #Exclude the student name which is in the first cell
+        {
+            $n++
+            $sum += $mark
+        }
+    }    
+    $avg = $sum / $n
+    return $avg
+
+} #Average
+
+<#Note
+  ReadKey not possible in ISE
+  https://stackoverflow.com/questions/3963100/how-do-you-do-a-pause-with-powershell-2-0
+  https://adamstech.wordpress.com/2011/05/12/how-to-properly-pause-a-powershell-script/
+#>
+
+#Menu
+function Menu
+{
+    #Clear console
+    cls
+    "`n"   
+
+    Write-Host "A. Add student"
+    Write-Host "B. Remove student"
+    Write-Host "C. Show students"
+    Write-Host "X. Exit"
+    Write-Host
+
+    $private:option = Read-Host -Prompt "Option"
+    return $option
+} #Menu
+
+function ListStudents
+{
+    param([array][array]$Students)
+
+    #Clear console
+    cls
+    "`n"   
+
+    #Page header
+    Write-Host "LIST STUDENTS"
+    Write-Host "============="
+
+    #Dimensions
+    $nStudents = $Students.Count
+    #Write-Host "nStudents:" $nStudents
+    $nColumns = $Students[0].Count
+    #Write-Host "nColumns:" $nColumns
+
+    #Sort alphabetically
+    $Students = $Students | Sort-Object
+
+    #Column headers
+    Write-Host ("Name".PadRight(10) + "Test 1".PadLeft(10) + "Test 2".PadLeft(10) + "Test 3".PadLeft(10) + "Average".PadLeft(10))
+    Write-Host "".PadLeft(50, '=')
+
+    #Initialise
+    #- Column totals
+    $colTotals = @()
+    foreach ($cell in $Students[0])
+    {
+        $colTotals += 0
+    }
+    #- Grand total    
+    $grandTotal = 0
+
+    #Step through rows
+    for ([int] $s = 0; $s -lt $nStudents; $s++)
+    {
+        #Student name
+        Write-Host -NoNewline $Students[$s][0].ToString().PadRight(10) 
+
+        #Step through marks (other columns) for this student
+        for ([int] $c = 1; $c -lt $nColumns; $c++)
+        {
+            #Write mark for this student for this column
+            Write-Host -NoNewline $Students[$s][$c].ToString().PadLeft(10) 
+
+            #Add to applicable column total
+            $colTotals[$c] += $Students[$s][$c]
+            $grandTotal += $Students[$s][$c]
+        } #for column
+
+        #Average for this student
+        Write-Host (Average $Students[$s]).ToString("n1").PadLeft(10)
+    } #for row
+
+    #Underline
+    Write-Host "".PadRight(50,'=')
+
+    #Show column averages
+    Write-Host -NoNewline "Average".PadRight(10)
+    for ($c = 1; $c -lt $nColumns; $c++)
+    {
+        #Write-Host -NoNewline $colTotals[$c].ToString().PadLeft(10)
+        Write-Host -NoNewline ($colTotals[$c]/$nStudents).ToString("n1").PadLeft(10)
+    }
+
+    #Grand average
+    Write-Host ($grandTotal/$nStudents/($nColumns-1)).ToString("n1").PadLeft(10)
+
+    #Underline
+    Write-Host "".PadRight(50,'=')
+    
+    Read-Host -prompt "`nPress ENTER to return to menu ..."
+
+} #ListStudents
+
+function AddStudent
+{   
+    #Clear console
+    cls
+    "`n"   
+
+    #Page header
+    Write-Host "ADD STUDENT"
+    Write-Host "==========="
+    "`n"
+
+    #Read new student's properties
+    [string]$Name = Read-Host -Prompt "Student name"
+    [int]$Test1 = Read-Host -Prompt "Test 1"
+    [int]$Test2 = Read-Host -Prompt "Test 2"
+    [int]$Test3 = Read-Host -Prompt "Test 3"
+
+    #Add new student
+    $global:Students += (,($Name,$Test1,$Test2,$Test3))  
+
+    #Display new list of students
+    ListStudents $Students
+
+    <#
+      I cannot succeed to return a 2D array. After return, it flattens it into 1D. 
+      So, passing the array as a parameter and returning it does not work.
+      Therefore, rather use global variable.
+      return ([array][array]$Students)
+    #>
+} #AddStudent
+
+function AddStudent
+{   
+    #Clear console
+    cls
+    "`n"   
+
+    #Page header
+    Write-Host "ADD STUDENT"
+    Write-Host "==========="
+    "`n"
+
+    
+    
+    Read-Host -prompt "Press ENTER to return to menu ..."
+
+} #AddStudent
+
+function DeleteStudent
+{
+    #Clear console
+    cls
+    "`n"   
+
+    #Page header
+    Write-Host "DELETE STUDENT"
+    Write-Host "=============="
+    "`n"
+
+    #Read name of student to delete
+    $toDelete= Read-Host -Prompt "Name of student to delete"
+
+    #Delete student
+    $global:Students = $global:Students | Where-Object { $_[0] -ne $toDelete}
+
+    #Display new list of students
+    ListStudents $Students
+
+} #DeleteStudent
+
+#Main function
+function Main
+{
+    #Instantiate
+    #- Must be global to be accessible in AddStudent, Delete Student.
+    $global:Students = 
+    @(
+        ("Sarah", 34, 56, 38),
+        ("Mike", 68, 76, 72),
+        ("Susan", 10, 91, 86),
+        ("Ben", 3, 34, 55),
+        ("Peter", 67, 81, 75)
+     )
+
+    #Loop through menu items
+    do
+    {
+        $option = Menu
+        
+        switch ($option)
+        {
+            "A" { AddStudent }
+            "B" { DeleteStudent }
+            "C" { ListStudents $Students }
+        }
+
+    } until ($option -eq "X")
+
+} #Main
+
+#Start here
+Main
+
+<# References
+    https://ss64.com/ps/syntax-arrays.html
+#>
+
