@@ -1,0 +1,243 @@
+1.	Describe the steps to show/not show hidden files and folders in File Explorer.
+The answer should list all steps along with the relevant screen prints, like this:
+
+	Control panel / File Explorer options
+	View
+	Under Hidden files and folders, check the appropriate radio button.
+	Click OK.
+
+
+(I used Gadwin PrintScreen here)	
+(I used Alt-PrintScreen here)
+
+Reference: https://www.lifewire.com/how-to-show-hide-hidden-files-and-folders-in-windows-2626085 
+
+(By the way, the answer at the url below is incorrect as it applies to the current folder only. So be careful how you search. Evaluate a reference before you take it as the answer. https://support.microsoft.com/en-us/windows/view-hidden-files-and-folders-in-windows-97fbc472-c603-9d90-91d0-1166d1d9f4b5)
+
+2.	Describe the steps to always show the file extensions in File Explorer.
+	Control panel / File Explorer options
+	View
+	Uncheck "Hide extensions for known file types"
+
+ 
+3.	Describe the steps to follow to get to the following screen. 
+
+
+
+	Defragment and Optimise drives
+	Scheduled optimisation
+	Change settings
+	Choose
+
+4.	Describe the steps to delete all temporary Internet files on your computer.
+	Disk cleanup
+	Select drive
+	Check temporary Internet files
+	OK
+
+5.	Your computer gets the current time from an internet time server. Describe the steps to change the server.
+	Control Panel / Date and Time
+	Internet time
+	Change settings
+	Select server
+
+6.	How do you force Windows to notify you when applications or yourself try to install software or make changes to your computer.
+Control panel / Security and Maintenance
+Change User Account Control Settings
+Move slider to the top notch
+
+7.	How can you see the date and time when Windows was not properly shutdown?
+	Control Panel / Security and Maintenance
+	View archived messages
+	Inspect the entries under Critical events
+	Click on "View technical details"
+
+8.	How do you change the decimal symbol as it is used by, for example, Microsoft Excel?  
+	Control panel / Region
+	Additional settings
+	Numbers
+	Decimal symbols
+
+9.	How do you change the currency symbol as it is used by, for example, Microsoft Excel?  
+	Control panel / Region
+	Additional settings
+	Currency
+	Currency symbol
+
+10.	How do you add a new normal user to the computer? The person does not have a Microsoft account and you do not want to create one either.
+Windows 10	Windows 11
+Settings
+Accounts
+Family and other users
+Add someone else to this PC
+I don't have this person's sign-in information
+Add a user without a Microsoft account
+Enter user name and password (2x)
+In case you forget fields
+Next
+		Right-click on Start
+	Settings
+	Accounts
+Under Other users: Add account
+	I don't have this person's sign-in information
+	Add a user without a Microsoft account
+	Enter user name and password (2x)
+In case your forget fields
+Next
+
+Alternative
+Control panel /User Accounts
+	Manage another account
+	Add a new user in PC Settings
+Follow the steps from there
+
+
+11.	How do you give read access to a folder for a specific user?
+Option 1
+File Explorer
+Right-click on a folder
+Properties
+Security
+Edit
+Add
+Enter username
+OK
+Click on username
+Under Allow, check only Read
+OK, OK
+
+Option 2
+File Explorer
+Right-click on a folder
+Show more options
+Give access to
+Specific people
+Select user from dropdown
+Add
+Click on user name
+Set permission level
+Share, Done
+
+12.	How do you disable automatic updates permanently without editing the registry or installing an update blocker?
+	Option 1 (Group policy)
+	gpedit
+	Computer Configuration / Administrative templates 
+		/ Windows Components / Windows update / Manage end user experience
+	Double-click on "Configure Automatic Updates"
+	Check Disabled
+
+	Option 2 (Services)
+	Services
+	Windows update (double-click)
+	Startup type: Disabled
+	
+13.	How do you change the period of inactivity after which the computer is put to sleep?
+	Control Panel / Power Options / Change when the computer sleeps
+	Put the computer to sleep: Select option
+
+14.	How do you restore a computer to an earlier state after a failed software installation? You may opt to abort the recovery right at the end of the process by clicking Cancel instead of Finish.
+	Control panel / Recovery
+	Open System Restore / Next
+	Select a restore point / Next / Finish
+	
+15.	How do you determine the Windows version on your computer?
+	Control panel / System
+	
+16.	How do you obtain a list of installed apps that start automatically when a user signs in?
+	Settings / Apps / Startup
+
+17.	How do you open the task manager?
+	Three options:
+	1.	Ctrl-Shift-Esc
+	2. Alt-Ctrl-Delete / Task Manager
+	3.	Control Panel / Windows Tools / Task manager
+
+18.	How do you get a detailed overview of memory usage at a specific moment in time? This includes details about installed RAM, total physical memory, available physical memory, total virtual memory and available virtual memory.
+	Control Panel / Windows tools / System Information
+
+19.	How do you get a graphical overview of memory usage as in the following screen print?
+
+resmon
+Memory
+
+20.	How do you obtain a list of system errors and the details of a specific error?
+	Control Panel / Windows Tools / Event viewer
+	Windows Logs / System
+	Click on error and inspect the details
+
+21.	How do you schedule a program, for example Notepad, to start every day at 09:00?
+	Control Panel / Windows Tools / Task Scheduler
+	Create Basic Task
+		Name
+		Description
+	Trigger
+		Daily, Next
+		Edit start time
+	Action
+		Start a program
+		Browse to program exe
+		Next
+	Finish
+
+22.	When you want to print a document from Word, you see this:
+
+
+
+	You are sure that the printer is installed correctly and suspect that the Print Spooler is not running.  How do you check this and correct the error if this is the case?
+	Services
+	Print Spooler
+	Check the status
+	Double click
+	Start the service and ensure startup type is Automatic
+
+23.	Windows Defender is built-in anti-virus software. If you install a third-party application, e.g. Avast, you suspect that there might be conflicts. How do you switch Windows Defender off?
+	(B.t.w. you don’t have to do it - Avast will disable Defender automatically.)
+	Controls Panel / Windows Defender Firewall
+	Turn Windows defender Firewall on or off
+	Turn off Windows Defender Firewall for both private and pubic network settings
+
+24.	You do not want users to use Firefox to access the internet.  Using Windows Defender, how do you block outgoing traffic from Firefox?
+	Control Panel / Windows Defender Firewall
+	Advanced settings
+	Outbound Rules
+	New rule …
+		Rule type: Program / Next
+		Program: Enter the path, e.g. C:\Program Files\Mozilla Firefox\firefox.exe, Next
+		Action: Block, Next
+		Profile: Check all three (Domain, Private, Public), Next
+		Name: Firefox block (or whatever), Finish
+	Check that it works
+
+25.	How do you change the drive letter of a USB flash drive?
+	Disk management
+	Select the drive
+	Right-click
+	Change Drive Letter and Paths
+	Change
+	Select new letter
+	OK	
+	
+26.	The COM port driver is outdated.  How do you update it?
+	Device manager
+	Double-click on the appropriate controller
+	Driver
+	Update driver
+	Search automatically
+	
+27.	How do you prevent a user from using regedit?
+	gpedit
+	User configuration / Administrative templates / System
+	Double-click on "Prevent access to registry editing tools"
+	Check Enabled
+	OK
+
+28.	How do you configure the group policy for a specific user or group of users?
+	Run
+	MMC (Microsoft Management Console)
+	File / Add/Remove Snap-in...
+	Group policy Object editor
+	Add, Browse
+	Users, Non-administrators
+	OK, Finish, OK
+	Double-click on the new user group and edit the group policy
+	File / Save as… (Select a name for the policy, Save
